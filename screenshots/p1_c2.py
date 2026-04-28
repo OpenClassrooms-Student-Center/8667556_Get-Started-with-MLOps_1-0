@@ -1,6 +1,6 @@
 # %%
 
-# ----------------------------- Screenshot Regression Lineaire 2D ----------------------------- #
+# ----------------------------- Screenshot Linear Regression 2D ----------------------------- #
 
 REGRESSION_TARGET = "prix"
 from sklearn.linear_model import LinearRegression
@@ -13,10 +13,10 @@ import polars as pl
 
 
 """
-On se restreint au périmètre du screenshot; 
-Ici nous utilisons la syntaxe de Polars. Mais un équivalent Pandas serait
+We restrict the scope to the screenshot's data range.
+Here we use Polars syntax. The Pandas equivalent would be:
 
-transactions_regression_2D = transacations[
+transactions_regression_2D = transactions[
     (transactions["departement"] == 75)
     & (transactions[REGRESSION_TARGET] >= transactions[REGRESSION_TARGET].quantile(0.1))
 ][["surface_habitable", REGRESSION_TARGET]]
@@ -27,26 +27,26 @@ transactions_regression_2D = transactions.filter(
     pl.col(REGRESSION_TARGET) >= pl.quantile(REGRESSION_TARGET, 0.1),
 ).select(["surface_habitable", REGRESSION_TARGET])
 
-# On crée un modèle de régression linéaire qui essaie d'expliquer la target à partir de la feature choisie
+# Train a linear regression model to explain the target from the chosen feature
 linear_regressor_2D = LinearRegression()
 
 """
-A l'heure d'écriture de ce code, Scikit-learn ne supporte pas les Polars DataFrame directement. 
-Il faut alors réaliser une conversion en numpy array, le format au coeur de la majorité des opération Scikit-learn aujourd'hui
+At the time this code was written, Scikit-learn does not support Polars DataFrames directly.
+A conversion to a numpy array is required, as numpy is the core format for most Scikit-learn operations.
 """
 linear_regressor_2D.fit(
     transactions_regression_2D["surface_habitable"].to_numpy().reshape(-1, 1),
     transactions_regression_2D[REGRESSION_TARGET].to_numpy(),
 )
 
-# On trace un nuage de points classique des batiments
+# Scatter plot of all properties
 plt.scatter(
     transactions_regression_2D["surface_habitable"],
     transactions_regression_2D[REGRESSION_TARGET],
-    label="Batiments",
+    label="Properties",
 )
 
-# Simulation de points factices, simplement pour générer la droite
+# Generate dummy points to draw the regression line
 surface_habitable_range = np.linspace(
     transactions_regression_2D["surface_habitable"].min(),
     transactions_regression_2D["surface_habitable"].max(),
@@ -54,44 +54,44 @@ surface_habitable_range = np.linspace(
 ).reshape(-1, 1)
 predictions = linear_regressor_2D.predict(surface_habitable_range)
 
-# Ajout de la ligne de regression
-plt.plot(surface_habitable_range, predictions, color="red", label="Ligne de regression")
-plt.xlabel("Surface habitable")
+# Add the regression line
+plt.plot(surface_habitable_range, predictions, color="red", label="Regression Line")
+plt.xlabel("Living Area")
 plt.ylabel(REGRESSION_TARGET)
-plt.title("Lien entre surface habitable et prix de transaction")
+plt.title("Relationship between Living Area and Transaction Price")
 plt.legend()
 plt.show()
 
 # %%
-# ---------------------- Screenshot Regression Logistique Frontière de Décision ---------------------- #
+# ---------------------- Screenshot Logistic Regression Decision Boundary ---------------------- #
 
 CLASSIFICATION_TARGET = "en_dessous_du_marche"
 from mlxtend.plotting import plot_decision_regions
 from sklearn.linear_model import LogisticRegression
 
-# Nous choissons ces 2 features uniquement pour illustrer le concept !
+# We choose these 2 features only to illustrate the concept
 transactions_classification_3D = transactions.filter(
     pl.col("departement") == 4,
     pl.col(REGRESSION_TARGET) >= pl.quantile(REGRESSION_TARGET, 0.1),
 ).select(["surface_habitable", REGRESSION_TARGET, CLASSIFICATION_TARGET])
 
-# On entraine notre regression logistique
+# Train the logistic regression model
 logistic_regressor = LogisticRegression()
 X = transactions_classification_3D.select(["surface_habitable", "prix"]).to_numpy()
 y = transactions_classification_3D[CLASSIFICATION_TARGET].to_numpy()
 logistic_regressor.fit(X, y)
 
 
-# Nous faisons appel à cette librairie pour tracer la frontière de décision
+# Use this library to plot the decision boundary
 plot_decision_regions(X, y, clf=logistic_regressor, legend=2)
-plt.xlabel("Surface habitable")
+plt.xlabel("Living Area")
 plt.ylabel(REGRESSION_TARGET)
-plt.title("Decision Boundary de la régression logistique")
+plt.title("Decision Boundary of Logistic Regression")
 plt.legend()
 plt.show()
 
 
-# ----------------- Idem pour le modèle Random Forest ----------------- #
+# ----------------- Same for the Random Forest model ----------------- #
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -101,8 +101,8 @@ rf_classifier = RandomForestClassifier()
 rf_classifier.fit(X, y)
 
 plot_decision_regions(X, y, clf=rf_classifier, legend=2)
-plt.xlabel("Surface habitable")
+plt.xlabel("Living Area")
 plt.ylabel("prix")
-plt.title("Decision Boundary de la Random Forest")
+plt.title("Decision Boundary of Random Forest")
 plt.legend()
 plt.show()

@@ -16,12 +16,12 @@ def compute_city_features(
     quantile_threshold=0.8,
     verbose: bool = False,
 ):
-    nb_transactions_departement = transactions_per_city.group_by(grouping_columns).agg(
+    nb_transactions_per_department = transactions_per_city.group_by(grouping_columns).agg(
         pl.sum(NB_TRANSACTIONS_PER_MONTH).alias("nb_transactions_departement")
     )
 
     transactions_per_city = transactions_per_city.join(
-        nb_transactions_departement,
+        nb_transactions_per_department,
         on=grouping_columns,
         how="left",
     )
@@ -31,48 +31,47 @@ def compute_city_features(
             100
             * pl.col(NB_TRANSACTIONS_PER_MONTH)
             / pl.col("nb_transactions_departement")
-        ).alias("ratio_transactions_ville")
+        ).alias("city_transaction_ratio")
     ).drop("nb_transactions_departement")
 
     if verbose:
-        print(transactions_per_city.select("ratio_transactions_ville").describe())
+        print(transactions_per_city.select("city_transaction_ratio").describe())
     else:
         pass
 
     transactions_per_city = transactions_per_city.with_columns(
         pl.when(
-            pl.col("ratio_transactions_ville")
-            > pl.quantile("ratio_transactions_ville", quantile_threshold)
+            pl.col("city_transaction_ratio")
+            > pl.quantile("city_transaction_ratio", quantile_threshold)
         )
         .then(1)
         .otherwise(0)
         .alias(feature_name),
-    ).drop("ratio_transactions_ville")
+    ).drop("city_transaction_ratio")
 
     return transactions_per_city
 
 
 def create_debt_ratio_features(
-    contexte_macro_eco_annuel: pl.DataFrame,
+    annual_macro_eco_context: pl.DataFrame,
     debt_ratio_col: str = "taux_endettement",
 ):
-    contexte_macro_eco_annuel = contexte_macro_eco_annuel.with_columns(
-        pl.col("date").cast(
-            pl.Int32
-        ),  # Simple conversion utilisée pour une jointure après
+    # Simple cast used for a join downstream
+    annual_macro_eco_context = annual_macro_eco_context.with_columns(
+        pl.col("date").cast(pl.Int32),
         pl.col(debt_ratio_col).diff().alias("variation_" + debt_ratio_col),
         pl.col(debt_ratio_col).diff().diff().alias("acceleration_" + debt_ratio_col),
     )
 
-    return contexte_macro_eco_annuel
+    return annual_macro_eco_context
 
 
 def calculate_interest_rate_features(
-    contexte_macro_eco_mensuel: pl.DataFrame,
+    monthly_macro_eco_context: pl.DataFrame,
     aggregation_period: str,
     interest_rate_col: str,
 ):
-    contexte_macro_eco_mensuel = contexte_macro_eco_mensuel.with_columns(
+    monthly_macro_eco_context = monthly_macro_eco_context.with_columns(
         pl.col(interest_rate_col).diff().name.prefix("variation_"),
         pl.col(interest_rate_col).diff().diff().name.prefix("acceleration_"),
     ).with_columns(
@@ -81,7 +80,7 @@ def calculate_interest_rate_features(
         .name.prefix("moyenne_glissante_" + aggregation_period + "_"),
     )
 
-    return contexte_macro_eco_mensuel
+    return monthly_macro_eco_context
 
 
 def compute_price_per_m2_features(
@@ -119,8 +118,8 @@ def compute_price_per_m2_features(
     return average_per_month_per_city
 
 
-"""'
-VERSION DE LA FONCTION UTILISEE DANS LE CADRE DU SCREENCAST P1_C3_FEATURE_ENGINEERING
+"""
+VERSION OF THE FUNCTION USED IN THE SCREENCAST P1_C3_FEATURE_ENGINEERING
 
 def compute_price_per_m2_features(
     average_per_month_per_city: pl.DataFrame,

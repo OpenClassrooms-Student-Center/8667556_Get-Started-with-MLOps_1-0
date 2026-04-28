@@ -1,16 +1,16 @@
 import os
 
 # ---------------------- Filepaths ---------------------
-# Utilisation de variables d'environnement pour éviter de hardcoder le chemin de la donnée
+# Using environment variables to avoid hardcoding the data path
 PROJECT_PATH = os.environ.get("SUPERVISED_LEARNING_PROJECT_PATH")
 TRANSACTIONS_FILE_PATH = os.path.join(PROJECT_PATH, "transactions.npz")
-FOYER_FISCAUX_FILE_PATH = os.path.join(PROJECT_PATH, "foyers_fiscaux.csv")
-TAUX_ENDETTEMENT_FILE_PATH = os.path.join(PROJECT_PATH, "taux_endettement.csv")
-ACTIFS_FINANCIERS_FILE_PATH = os.path.join(PROJECT_PATH, "actifs_financiers.csv")
-TAUX_DINTERET_FILE_PATH = os.path.join(PROJECT_PATH, "taux_interet.csv")
-FLUX_EMPRUNTS_FILE_PATH = os.path.join(PROJECT_PATH, "flux_nouveaux_emprunts.csv")
+TAX_HOUSEHOLDS_FILE_PATH = os.path.join(PROJECT_PATH, "foyers_fiscaux.csv")
+DEBT_RATIO_FILE_PATH = os.path.join(PROJECT_PATH, "taux_endettement.csv")
+FINANCIAL_ASSETS_FILE_PATH = os.path.join(PROJECT_PATH, "actifs_financiers.csv")
+INTEREST_RATE_FILE_PATH = os.path.join(PROJECT_PATH, "taux_interet.csv")
+NEW_LOANS_FILE_PATH = os.path.join(PROJECT_PATH, "flux_nouveaux_emprunts.csv")
 REGIONS_FILE_PATH = os.path.join(PROJECT_PATH, "departements-france.csv")
-INDICE_REFERENCE_LOYERS = os.path.join(PROJECT_PATH, "indice_reference_loyers.csv")
+RENT_REFERENCE_INDEX_FILE_PATH = os.path.join(PROJECT_PATH, "indice_reference_loyers.csv")
 
 
 # ---------------------- Raw Column names ------------------

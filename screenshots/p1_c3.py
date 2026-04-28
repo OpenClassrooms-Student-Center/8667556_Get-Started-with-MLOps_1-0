@@ -27,11 +27,11 @@ plt.show()
 
 
 highly_correlated_features = [
-    "type_batiment_Maison",  # On garde l'une ou l'autre
-    "n_pieces",  # On garde la surface habitable
-    # "annee_transaction", # On garde le taux d'endettement
-    "euros_par_habitant",  # Très corrélé avec le taux d'endettement
-    "montant_impot_moyen",  # Très corrélé avec le revenu fiscal moyen
+    "type_batiment_Maison",     # Keep one or the other
+    "n_pieces",                 # Keep living area instead
+    # "annee_transaction",      # Keep debt ratio instead
+    "euros_par_habitant",       # Highly correlated with debt ratio
+    "montant_impot_moyen",      # Highly correlated with average taxable income
     "fraction_assurance_vie",
     "fraction_fonds_communs",
     "fraction_titres_non_action",

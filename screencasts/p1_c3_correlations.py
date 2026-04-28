@@ -43,18 +43,19 @@ plt.title("Correlation Matrix")
 plt.show()
 
 """
-Le prix moyen au m2 du mois précédent est redodant avec le prix glissant à 6 mois, ce qui indique dans la majorité des cas une évolution lente du prix au m2 du marché
-Pareil pour le nombre de transactions
-L'annee est très corrélée à plusieurs informations 
-Fraction depot banque très corrélé a
+The previous month's average price per m2 is redundant with the 6-month rolling average,
+indicating that price per m2 evolves slowly in most cases.
+Same observation for the number of transactions.
+The year is highly correlated with several other features.
+The bank deposit fraction is highly correlated with other financial asset features.
 """
 
 # %%
 highly_correlated_features = [
-    "type_batiment_Maison",  # On garde l'une ou l'autre
-    "n_pieces",  # On garde la surface habitable
-    # "annee_transaction", # On garde le taux d'endettement
-    "euros_par_habitant",  # Très corrélé avec le taux d'endettement
+    "type_batiment_Maison",             # Keep one or the other
+    "n_pieces",                         # Keep living area instead
+    # "annee_transaction",              # Keep debt ratio instead
+    "euros_par_habitant",               # Highly correlated with debt ratio
     "fraction_assurance_vie",
     "fraction_fonds_communs",
     "fraction_titres_non_action",

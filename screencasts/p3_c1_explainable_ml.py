@@ -1,5 +1,5 @@
 # %%
-# -------------------------- Imports --------------------------s
+# -------------------------- Imports --------------------------
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import polars as pl
@@ -56,7 +56,7 @@ rf_regressor.fit(X_train[feature_names], y_train)
 
 
 # %%
-# ---------------------- Trees Feature Importance ----------------------
+# ---------------------- Tree-based Feature Importance ----------------------
 importances = rf_regressor.feature_importances_
 indices = np.argsort(importances)
 std = np.std([tree.feature_importances_ for tree in rf_regressor.estimators_], axis=0)
@@ -70,7 +70,7 @@ plt.yticks(range(len(indices)), [feature_names[i] for i in indices])
 plt.xlabel("Relative Importance")
 
 # %%
-# ------------ Methode 1 ---------------
+# ------------ Method 1: Manual selection ---------------
 feature_names_simplified = [
     "surface_habitable",
     "prix_m2_moyen_mois_precedent",
@@ -82,7 +82,7 @@ feature_names_simplified = [
 
 
 # %%
-# ------------ Methode 2 ---------------
+# ------------ Method 2: Cumulative importance threshold ---------------
 def get_features_most_importance(importances, feature_names, threshold=0.8):
     sorted_indices = np.argsort(importances)
     sorted_importances = importances[sorted_indices][::-1]
@@ -110,7 +110,7 @@ rf_regressor_light = RandomForestRegressor(random_state=random_state)
 rf_regressor_light.fit(X_train[feature_names_simplified], y_train)
 
 # %%
-# -------------------------- Performance metrics Full Model  --------------------------
+# -------------------------- Performance Metrics - Full Model --------------------------
 y_train_pred = rf_regressor.predict(X_train[feature_names])
 y_test_pred = rf_regressor.predict(X_test[feature_names])
 
@@ -129,7 +129,7 @@ test_r2 = r2_score(y_test, y_test_pred)
 print("Test R2 : ", test_r2)
 
 # %%
-# -------------------------- Performance metrics Light Model  --------------------------
+# -------------------------- Performance Metrics - Light Model --------------------------
 y_train_pred = rf_regressor_light.predict(X_train[feature_names_simplified])
 y_test_pred = rf_regressor_light.predict(X_test[feature_names_simplified])
 
@@ -148,7 +148,7 @@ test_r2 = r2_score(y_test, y_test_pred)
 print("Test R2 : ", test_r2)
 
 # %%
-# -------------------------- Another Method : Permutation Importance  --------------------------
+# -------------------------- Permutation Importance --------------------------
 
 from sklearn.inspection import permutation_importance
 
@@ -177,7 +177,7 @@ plt.xlabel("Permutation Importances")
 
 
 # %%
-# --- Aller plus loin ------
+# --- Go further ------
 results
 # %%
 # -------------------------- SHAP Usage --------------------------

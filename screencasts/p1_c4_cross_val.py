@@ -92,7 +92,7 @@ classification_scoring_metrics = ("precision", "recall", "roc_auc")
 
 # %%
 
-# On va de nouveau travailler avec toutes les regions
+# Work with all regions again for the LeaveOneGroupOut variant
 X = transactions.drop([REGRESSION_TARGET, CLASSIFICATION_TARGET])
 y_classification = transactions[CLASSIFICATION_TARGET]
 

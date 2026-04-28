@@ -55,21 +55,22 @@ average_per_month_per_city_enough_transactions, average_per_month_per_city = (
 
 # %%
 """
-EXPLORATOIRE
-Cette analyse montre que seules 260 villes ont plus de 2 transactions immobilières par mois
-Utile dans le chapitre de la partie 4 pour montrer que le modèle ne peut fonctionner que dans des mois où on a assez de données
+EXPLORATORY
+This analysis shows that only 260 cities have more than 2 real-estate transactions per month.
+Useful in Part 1 Chapter 4 to illustrate that the model can only work in months
+where enough data is available.
 """
 
-min_nb_transacation_par_ville = average_per_month_per_city.group_by(CITY_UNIQUE_ID).agg(
+min_nb_transaction_per_city = average_per_month_per_city.group_by(CITY_UNIQUE_ID).agg(
     pl.min(NB_TRANSACTIONS_PER_MONTH)
 )
 
-min_nb_transacation_par_ville.filter(
+min_nb_transaction_per_city.filter(
     pl.col(NB_TRANSACTIONS_PER_MONTH) > pl.quantile(NB_TRANSACTIONS_PER_MONTH, 0.75)
 ).select(NB_TRANSACTIONS_PER_MONTH).describe()
 
 """
-FIN EXPLORATOIRE
+END EXPLORATORY
 """
 
 # %%
@@ -104,12 +105,12 @@ filtered_transactions = filtered_transactions.with_columns(
 # %%
 
 
-departements_regions = load_regions_data(REGIONS_FILE_PATH, departments_to_keep)
+departments_regions = load_regions_data(REGIONS_FILE_PATH, departments_to_keep)
 
 
 # %%
 filtered_transactions = filtered_transactions.join(
-    departements_regions, how="left", on="departement"
+    departments_regions, how="left", on="departement"
 )
 
 

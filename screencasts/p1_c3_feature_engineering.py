@@ -6,11 +6,11 @@ import sys
 sys.path.append("..")
 from settings import (
     PROJECT_PATH,
-    TAUX_ENDETTEMENT_FILE_PATH,
-    ACTIFS_FINANCIERS_FILE_PATH,
-    TAUX_DINTERET_FILE_PATH,
-    FLUX_EMPRUNTS_FILE_PATH,
-    INDICE_REFERENCE_LOYERS,
+    DEBT_RATIO_FILE_PATH,
+    FINANCIAL_ASSETS_FILE_PATH,
+    INTEREST_RATE_FILE_PATH,
+    NEW_LOANS_FILE_PATH,
+    RENT_REFERENCE_INDEX_FILE_PATH,
 )
 
 from data_processing_functions import (
@@ -50,7 +50,7 @@ transactions_per_city = transactions_per_city.with_columns(
 transactions.head()
 
 # %%
-# -------------- Création de features à partir d'un seuil sur une autre ---------------
+# -------------- Feature creation from a threshold on another feature ---------------
 
 # %%
 transactions_per_city.head()
@@ -70,7 +70,7 @@ transactions_per_city["ville_demandee"].describe()
 
 # %%
 
-# ---------------- Création de features en utilisant du "lagging" --------------
+# ---------------- Feature creation using lagging --------------
 
 transactions_per_city
 # %%
@@ -103,9 +103,9 @@ transactions = transactions.join(
 )
 
 # %%
-# ------------ Creation de features représentant des variations à court terme -------
+# ------------ Feature creation representing short-term variations -------
 annual_macro_eco_context = load_annual_macro_eco_context_data(
-    TAUX_ENDETTEMENT_FILE_PATH, ACTIFS_FINANCIERS_FILE_PATH
+    DEBT_RATIO_FILE_PATH, FINANCIAL_ASSETS_FILE_PATH
 )
 
 # %%
@@ -116,9 +116,9 @@ annual_macro_eco_context = create_debt_ratio_features(annual_macro_eco_context)
 
 
 # %%
-# ------------ Creation de features reorésentant des tendances à plus long terme  -------
+# ------------ Feature creation representing longer-term trends -------
 monthly_macro_eco_context = load_monthly_macro_eco_context_data(
-    TAUX_DINTERET_FILE_PATH, FLUX_EMPRUNTS_FILE_PATH, INDICE_REFERENCE_LOYERS
+    INTEREST_RATE_FILE_PATH, NEW_LOANS_FILE_PATH, RENT_REFERENCE_INDEX_FILE_PATH
 )
 
 monthly_macro_eco_context = monthly_macro_eco_context.with_columns(
@@ -162,8 +162,8 @@ transactions.write_parquet(
 # %%
 
 """
-On construit un dataframe avec des infos "extra" séparées des transactions. 
-Ces infos peuvent servir à l'interprétation.
+We build a DataFrame with "extra" information kept separate from transactions.
+This info can be useful for interpretation purposes.
 """
 
 cols_extra_info = [
@@ -178,9 +178,9 @@ cols_extra_info = [
     "adresse",
     "code_postal",
     "id_parcelle_cadastre",
-    "prix_m2",  # Pour eviter du Data Leakage
-    "prix_m2_moyen",  # Pour eviter du Data Leakage
-    "nom_departement",  # A exclure pour le moment
+    "prix_m2",          # Excluded to avoid data leakage
+    "prix_m2_moyen",    # Excluded to avoid data leakage
+    "nom_departement",  # Excluded for now
 ]
 
 transactions_extra_infos = transactions.select(

@@ -97,7 +97,7 @@ numerical_features = [col for col in feature_names if col not in categorical_fea
 # %%
 feature_names
 # %%
-# -------------------------- Data Split for screencast & exercice purposes --------------------------
+# -------------------------- Data Split for screencast & exercise purposes --------------------------
 
 transactions_v1 = transactions.filter(pl.col("annee_transaction") < 2020)
 
@@ -122,11 +122,11 @@ from mlflow import MlflowClient
 
 client = MlflowClient(tracking_uri="http://127.0.0.1:8080")
 
-# %% 
+# %%
 mlflow.search_runs(search_all_experiments=True)
 
 # %%
-# ------------------------ Premiere modèlisation ----------------
+# ------------------------ First Modeling Phase ----------------
 
 
 for region in tqdm(
@@ -140,8 +140,8 @@ for region in tqdm(
 
     experiment_tags = {
         "region": region,
-        "revision_de_donnees": "v1",
-        "date_de_construction": "Fin 2019",
+        "data_version": "v1",
+        "build_date": "End of 2019",
     }
 
     try:
@@ -149,7 +149,7 @@ for region in tqdm(
     except:
         region_experiment = mlflow.set_experiment(region)
 
-    # ------------------------ 1er Run Modèle Dummy  ----------------
+    # ------------------------ Run 1 - Dummy Model ----------------
     with mlflow.start_run(run_name="dummy_run_" + region) as run:
         print(
             " ------------------Running Dummy Model for Region: ",
@@ -183,7 +183,7 @@ for region in tqdm(
         )
         mlflow.log_input(dataset_abstraction)
 
-    # ------------------------ 2eme Run Modèle Catboost  ----------------
+    # ------------------------ Run 2 - CatBoost Model ----------------
     with mlflow.start_run(run_name="catboost_" + region) as run:
         print(
             " ------------------Running Catboost Model for Region: ",
@@ -223,7 +223,7 @@ for region in tqdm(
         feature_importances, features_1
     )
 
-    # ------------------------ 3eme Run Modèle Catboost Leger  ----------------
+    # ------------------------ Run 3 - Light CatBoost Model ----------------
     with mlflow.start_run(run_name="catboost_light_" + region) as run:
         print(
             " ------------------Running Catboost Light Model for Region: ",
@@ -260,7 +260,7 @@ for region in tqdm(
 
 
 # %%
-# ------------------------ Deuxième de modélisation ----------------
+# ------------------------ Second Modeling Phase ----------------
 
 nouvelle_acquitaine_experiment = client.set_experiment("Nouvelle-Aquitaine")
 
@@ -306,4 +306,3 @@ with mlflow.start_run(run_name="catboost_" + region) as run:
     most_important_features = get_features_most_importance(
         feature_importances, features_1
     )
-

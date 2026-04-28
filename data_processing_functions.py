@@ -36,7 +36,7 @@ def load_transactions(file_path: str = TRANSACTIONS_FILE_PATH) -> pl.DataFrame:
     return transactions
 
 
-def create_prix_au_m2_column(
+def create_price_per_m2_column(
     transactions: pl.DataFrame, price_col: str, square_meter_col: str
 ) -> pl.DataFrame:
     transactions = transactions.with_columns(
@@ -77,7 +77,7 @@ def process_transactions(
         pl.col(TRANSACTION_DATE).dt.year().alias(TRANSACTION_YEAR)
     )
 
-    filtered_transactions = create_prix_au_m2_column(
+    filtered_transactions = create_price_per_m2_column(
         filtered_transactions, REGRESSION_TARGET, SURFACE
     )
 
@@ -123,7 +123,7 @@ def get_info_per_month_cities_enough_transactions(
             pl.col(NB_TRANSACTIONS_PER_MONTH),
         ).describe()
 
-        # These are the cities that at least have 5 transactions per month
+        # Cities that have at least 5 transactions per month
         cities_enough_transactions = (
             average_per_month_per_city_enough_transactions.group_by(CITY_UNIQUE_ID).agg(
                 pl.col(NB_TRANSACTIONS_PER_MONTH).min().name.suffix("_nombre_min")
@@ -138,40 +138,38 @@ def get_info_per_month_cities_enough_transactions(
 
 
 def load_annual_macro_eco_context_data(
-    taux_endettement_file_path: str,
-    actifs_financiers_file_path: str,
+    debt_ratio_file_path: str,
+    financial_assets_file_path: str,
 ):
-    taux_endettement = pl.read_csv(taux_endettement_file_path)
-    actifs_financiers = pl.read_csv(actifs_financiers_file_path)
-    contexte_macro_eco_annuel = taux_endettement.join(
-        actifs_financiers, on="date"
-    )  # Le 2eme jeu de données remonte jusqu'aux années 90, on n'en n'a pas besoin
+    debt_ratio = pl.read_csv(debt_ratio_file_path)
+    financial_assets = pl.read_csv(financial_assets_file_path)
+    # The second dataset goes back to the 90s — we only need recent data
+    annual_macro_eco_context = debt_ratio.join(financial_assets, on="date")
 
-    return contexte_macro_eco_annuel
+    return annual_macro_eco_context
 
 
 def load_regions_data(regions_file_path: str, departments_to_keep: list):
-    departements_regions = pl.read_csv(regions_file_path)
+    departments_regions = pl.read_csv(regions_file_path)
 
-    departements_regions = departements_regions.filter(
+    departments_regions = departments_regions.filter(
         pl.col("code_departement").is_in(departments_to_keep)
     ).with_columns(
         pl.col("code_departement").cast(pl.Int32).alias("departement"),
         pl.col("code_region").cast(pl.Int32).alias("region"),
     )
 
-    return departements_regions
+    return departments_regions
 
 
 # ----------------- Datasets to be joined ----------------------------
 
+# All of these datasets include macroeconomic information used as features
 
-# Tous ces datasets incluent des infos macro-economiques qui serviront en tant que features
 
-
-def load_foyers_fiscaux(
+def load_tax_households(
     filepath: str,
-    permietre_de_villes: pl.DataFrame,
+    city_scope: pl.DataFrame,
     cols_to_keep: list = [
         "date",
         "departement",
@@ -182,47 +180,47 @@ def load_foyers_fiscaux(
         "montant_impot_moyen",
     ],
 ) -> pl.DataFrame:
-    foyers_fiscaux = pl.read_csv(filepath, infer_schema_length=None)
+    tax_households = pl.read_csv(filepath, infer_schema_length=None)
 
-    foyers_fiscaux = foyers_fiscaux.filter(
+    tax_households = tax_households.filter(
         pl.col(DEPARTEMENT).is_in(
-            [str(e) for e in permietre_de_villes[DEPARTEMENT].unique()]
+            [str(e) for e in city_scope[DEPARTEMENT].unique()]
         )
     ).with_columns([pl.col(e).cast(pl.Int32) for e in ["departement", "id_ville"]])
 
-    foyers_fiscaux = foyers_fiscaux.join(
-        permietre_de_villes, how="inner", on=permietre_de_villes.columns
+    tax_households = tax_households.join(
+        city_scope, how="inner", on=city_scope.columns
     )
 
-    foyers_fiscaux = foyers_fiscaux.select(cols_to_keep)
+    tax_households = tax_households.select(cols_to_keep)
 
-    return foyers_fiscaux
+    return tax_households
 
 
 def load_monthly_macro_eco_context_data(
-    taux_interet_path: str = TRANSACTIONS_FILE_PATH,
-    nouveaux_emprunts_path: str = TRANSACTIONS_FILE_PATH,
-    references_loyers_path: str = TRANSACTIONS_FILE_PATH,
+    interest_rate_path: str = TRANSACTIONS_FILE_PATH,
+    new_loans_path: str = TRANSACTIONS_FILE_PATH,
+    rent_reference_index_path: str = TRANSACTIONS_FILE_PATH,
 ):
-    taux_interet = pl.read_csv(taux_interet_path, try_parse_dates=True)
-    nouveaux_emprunts = pl.read_csv(nouveaux_emprunts_path, try_parse_dates=True)
+    interest_rate = pl.read_csv(interest_rate_path, try_parse_dates=True)
+    new_loans = pl.read_csv(new_loans_path, try_parse_dates=True)
 
-    contexte_macro_eco_mensuel = taux_interet.join(nouveaux_emprunts, on="date")
+    monthly_macro_eco_context = interest_rate.join(new_loans, on="date")
 
-    indices_reference_loyers = pl.read_csv(references_loyers_path, try_parse_dates=True)
-    indices_reference_loyers = indices_reference_loyers.with_columns(
+    rent_reference_index = pl.read_csv(rent_reference_index_path, try_parse_dates=True)
+    rent_reference_index = rent_reference_index.with_columns(
         pl.col("date").dt.year().alias("annee"), pl.col("date").dt.month().alias("mois")
     )
 
-    contexte_macro_eco_mensuel = contexte_macro_eco_mensuel.with_columns(
+    monthly_macro_eco_context = monthly_macro_eco_context.with_columns(
         pl.col("date").dt.year().alias("annee"), pl.col("date").dt.month().alias("mois")
     )
 
-    # Foward Fill car la donnée est trimestrielle et non mensuelle
-    contexte_macro_eco_mensuel = (
+    # Forward fill because the data is quarterly, not monthly
+    monthly_macro_eco_context = (
         (
-            contexte_macro_eco_mensuel.join(
-                indices_reference_loyers, on=["annee", "mois"], how="left"
+            monthly_macro_eco_context.join(
+                rent_reference_index, on=["annee", "mois"], how="left"
             )
             .sort(["annee", "mois"])
             .with_columns(pl.col("mois").forward_fill(), pl.col("IRL").forward_fill())
@@ -231,23 +229,23 @@ def load_monthly_macro_eco_context_data(
         .rename({"taux": "taux_interet", "IRL": "indice_reference_loyers"})
     )
 
-    return contexte_macro_eco_mensuel
+    return monthly_macro_eco_context
 
 
 def add_economical_context_features(
     transactions: pl.DataFrame,
-    contexte_macro_eco_annuel: pl.DataFrame,
-    contexte_macro_eco_mensuel: pl.DataFrame,
+    annual_macro_eco_context: pl.DataFrame,
+    monthly_macro_eco_context: pl.DataFrame,
 ) -> pl.DataFrame:
     transactions_merged = transactions.join(
-        contexte_macro_eco_annuel,
+        annual_macro_eco_context,
         left_on=TRANSACTION_YEAR,
         right_on="date",
         how="left",
     )
 
     transactions_merged = transactions_merged.join(
-        contexte_macro_eco_mensuel,
+        monthly_macro_eco_context,
         left_on=[TRANSACTION_YEAR, TRANSACTION_MONTH],
         right_on=["annee", "mois"],
         how="left",
@@ -294,7 +292,7 @@ def remove_regions_with_few_transactions(
     filtered_transactions: pl.DataFrame,
     nb_regions_to_keep: int = 5,
 ):
-    regions_avec_plus_de_transactions = (
+    regions_with_most_transactions = (
         filtered_transactions.select(REGION)
         .to_series()
         .value_counts()
@@ -306,7 +304,7 @@ def remove_regions_with_few_transactions(
     )
 
     filtered_transactions = filtered_transactions.filter(
-        pl.col(REGION).is_in(regions_avec_plus_de_transactions)
+        pl.col(REGION).is_in(regions_with_most_transactions)
     )
 
     return filtered_transactions

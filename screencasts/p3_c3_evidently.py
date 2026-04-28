@@ -47,11 +47,11 @@ transactions = transactions.merge(
     how="left",
 )
 
-transactions["anne_mois"] = transactions["date_transaction"].dt.to_period("M")
+transactions["year_month"] = transactions["date_transaction"].dt.to_period("M")
 
 # %%
 # -------------------------- Target Evolution Analysis --------------------------
-class_proportion_evolution = transactions.groupby(["anne_mois"], as_index=False)[
+class_proportion_evolution = transactions.groupby(["year_month"], as_index=False)[
     CLASSIFICATION_TARGET
 ].value_counts()
 
@@ -65,26 +65,26 @@ class_one_evolution = class_proportion_evolution[
 
 plt.figure(figsize=(13, 10))
 plt.bar(
-    class_zero_evolution["anne_mois"].astype(str),
+    class_zero_evolution["year_month"].astype(str),
     class_zero_evolution["count"],
     color="red",
 )
 plt.bar(
-    class_one_evolution["anne_mois"].astype(str),
+    class_one_evolution["year_month"].astype(str),
     class_one_evolution["count"],
     color="green",
 )
 plt.xticks(rotation=90)
-plt.legend(["Classe 0", "Classe 1"])
+plt.legend(["Class 0", "Class 1"])
 
 # %%
-# -------------------------- Seperating Dataset into 3 periods --------------------------
-transactions_pre_covid = transactions[transactions["anne_mois"] < "2020-03"]
+# -------------------------- Splitting Dataset into 3 Periods --------------------------
+transactions_pre_covid = transactions[transactions["year_month"] < "2020-03"]
 
 transactions_covid = transactions[
-    transactions["anne_mois"].between("2020-03", "2021-07")
+    transactions["year_month"].between("2020-03", "2021-07")
 ]
-transactions_post_covid = transactions[transactions["anne_mois"] > "2021-07"]
+transactions_post_covid = transactions[transactions["year_month"] > "2021-07"]
 
 # %%
 feature_names
@@ -135,7 +135,7 @@ sns.displot(
 )
 
 # %%
-# -------------------------- Model Training on Pre-covid period --------------------------
+# -------------------------- Model Training on Pre-Covid Period --------------------------
 from xgboost import XGBClassifier
 
 xgboost_model = XGBClassifier(random_state=random_state)
